@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 8</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Title</h1>
+        <p>Description</p>
+
+        <!-- Chart on the left, details panel on the right -->
+        <div class="layout">
+            <div id="donor-chart"></div>
+
+            <aside id="donor-details" hidden>
+                <button type="button" id="close-details" aria-label="Close details">&times;</button>
+                <div id="donor-details-content"></div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
