@@ -1,0 +1,48 @@
+{
+  "scale_to": 5,
+  "impact": {
+    "max": 6.5,
+    "weights": [
+      {
+        "key": "historical_giving",
+        "label": "Historical Giving",
+        "weight": 3
+      },
+      {
+        "key": "free_market",
+        "label": "Alignment with Free Market",
+        "weight": 2
+      },
+      {
+        "key": "esc_affiliation",
+        "label": "Affiliation with ESC/Student Programming",
+        "weight": 1.5
+      }
+    ]
+  },
+  "effort": {
+    "max": 8.0,
+    "weights": [
+      {
+        "key": "historical_giving",
+        "label": "Historical Giving",
+        "weight": 3
+      },
+      {
+        "key": "warm_connections",
+        "label": "Warm Connections",
+        "weight": 2
+      },
+      {
+        "key": "esc_affiliation",
+        "label": "Affiliation with ESC/Student Programming",
+        "weight": 1.5
+      },
+      {
+        "key": "umd_affiliation",
+        "label": "Affiliation with UMD",
+        "weight": 1.5
+      }
+    ]
+  }
+}

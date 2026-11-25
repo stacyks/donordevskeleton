@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS and editor files
+.DS_Store
+.vscode/
+
+# Excel lock files created while a workbook is open
+data/raw/~$*
