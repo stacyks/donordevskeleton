@@ -1,19 +1,27 @@
 // ---------- Configuration ----------
-//USE Apps Script Web App URL!!!!!!
-const SHEET_API_URL = "https://google.com";
+// The data source (the Apps Script web app URL) is set in js/config.js.
+// The data arrives already weighted and rescaled by apps-script/Code.gs.
 
-// CSV columns: a, b, c (nominal), impact, effort (quantitative)
-// a = name shown in tooltip/panel title; b and c = detail sections in the side panel
-const DETAIL_FIELDS = [
-  { key: "rev_donor_bases", label: "Revenue & Donor Bases" },
-  { key: "prospect_track", label: "Prospecting & Tracking" }
+// The five criterion scores (each -1, 0 or 1) listed in the side panel:
+const SCORE_FIELDS = [
+  { key: "historical_giving", label: "Historical Giving" },
+  { key: "esc_affiliation", label: "Affiliation with ESC/Student Programming" },
+  { key: "free_market", label: "Alignment with Free Market" },
+  { key: "umd_affiliation", label: "Affiliation with UMD" },
+  { key: "warm_connections", label: "Warm Connections" }
 ];
 
-// Axes run from -AXIS_RANGE to +AXIS_RANGE, quadrants split at 0.
-// Change these numbers if your scores use a different scale.
+// Axes run from AXIS_MIN to AXIS_MAX, quadrants split at MIDPOINT.
+// Code.gs rescales both axes to +/- SCALE_TO; keep AXIS_MAX equal to it.
+// AXIS_PAD adds a little room past the last tick so edge points are not clipped.
 const AXIS_MIN = -5;
 const AXIS_MAX = 5;
+const AXIS_PAD = 0.5;
 const MIDPOINT = 0;
+
+// Donors with identical scores would sit exactly on top of each other,
+// so they are spread in a small circle this many axis units wide.
+const OVERLAP_SPREAD = 0.18;
 
 const margin = { top: 30, right: 40, bottom: 65, left: 65 };
 const width = 850;
@@ -25,11 +33,11 @@ const svg = d3.select("#donor-chart")
   .attr("viewBox", `0 0 ${width} ${height}`);
 
 const x = d3.scaleLinear()
-  .domain([AXIS_MIN, AXIS_MAX])
+  .domain([AXIS_MIN - AXIS_PAD, AXIS_MAX + AXIS_PAD])
   .range([margin.left, width - margin.right]);
 
 const y = d3.scaleLinear()
-  .domain([AXIS_MIN, AXIS_MAX])
+  .domain([AXIS_MIN - AXIS_PAD, AXIS_MAX + AXIS_PAD])
   .range([height - margin.bottom, margin.top]);
 
 // Quadrant dividing lines
@@ -66,11 +74,11 @@ svg.selectAll(".quadrant-label")
 // Axes
 svg.append("g")
   .attr("transform", `translate(0,${height - margin.bottom})`)
-  .call(d3.axisBottom(x).ticks(AXIS_MAX - AXIS_MIN));
+  .call(d3.axisBottom(x).tickValues(d3.range(AXIS_MIN, AXIS_MAX + 1)));
 
 svg.append("g")
   .attr("transform", `translate(${margin.left},0)`)
-  .call(d3.axisLeft(y).ticks(AXIS_MAX - AXIS_MIN));
+  .call(d3.axisLeft(y).tickValues(d3.range(AXIS_MIN, AXIS_MAX + 1)));
 
 // Axis labels
 svg.append("text")
@@ -102,6 +110,7 @@ const tooltip = d3.select("body")
 const panel = document.getElementById("donor-details");
 const panelContent = document.getElementById("donor-details-content");
 let selectedCircle = null;
+let weights = null; // arrives with the data from the endpoint
 
 function closePanel() {
   panel.hidden = true;
@@ -120,11 +129,40 @@ function showPanel(circle, d) {
 
   panelContent.innerHTML =
     `<h2>${escapeHTML(d.peer)}</h2>` +
-    DETAIL_FIELDS.map(f =>
-      `<h3>${escapeHTML(f.label)}</h3><p>${escapeHTML(d[f.key])}</p>`
-    ).join("");
+    `<p><strong>Persona:</strong> ${escapeHTML(d.persona)} (tier ${escapeHTML(d.tier_rank)})</p>` +
+    `<p><strong>Quadrant:</strong> ${escapeHTML(d.quadrant)}</p>` +
+    breakdownHTML("Impact", weights.impact, d, 1, d.impact_raw, d.impact) +
+    breakdownHTML("Effort", weights.effort, d, -1, d.effort_raw, d.effort) +
+    `<p class="note">Effort: a +1 score lowers effort, since that tie makes the donor easier to land.</p>` +
+    `<h3>All criterion scores</h3><ul>` +
+    SCORE_FIELDS.map(f =>
+      `<li>${escapeHTML(f.label)}: ${escapeHTML(d[f.key])}</li>`
+    ).join("") +
+    `</ul><p><strong>Spreadsheet total score:</strong> ${escapeHTML(d.total_score)}</p>`;
 
   panel.hidden = false;
+}
+
+// One axis's math: score x weight for each criterion, the raw sum, and the plotted value.
+// sign is 1 for impact and -1 for effort (a positive score lowers effort).
+function breakdownHTML(title, axis, d, sign, raw, plotted) {
+  const rows = axis.weights.map(w => {
+    const score = d[w.key];
+    const contribution = sign * score * w.weight;
+    return `<tr><td>${escapeHTML(w.label)}</td><td>${score}</td>` +
+      `<td>&times;${w.weight}</td><td>${signed(contribution)}</td></tr>`;
+  }).join("");
+  return `<h3>${title}: ${plotted} on the chart</h3>` +
+    `<table class="breakdown"><tr><th>Criterion</th><th>Score</th><th>Weight</th><th>Adds</th></tr>` +
+    rows +
+    `<tr class="total"><td colspan="3">Raw total (out of &plusmn;${axis.max})</td><td>${signed(raw)}</td></tr>` +
+    `</table>` +
+    `<p class="note">${signed(raw)} &divide; ${axis.max} &times; ${weights.scale_to} = ${plotted}</p>`;
+}
+
+function signed(v) {
+  const n = Math.round(v * 100) / 100 || 0;
+  return (n > 0 ? "+" : "") + n;
 }
 
 // Escape HTML before inserting data into the detail panel.
@@ -134,45 +172,95 @@ function escapeHTML(value) {
   })[char]);
 }
 
+// ---------- Load data and draw points ----------
+// js/config.js sets ENDPOINT to the Apps Script web app URL. With no ENDPOINT,
+// the page shows data/sample.json so it can be tried without the spreadsheet.
+const SAMPLE_PATH = "data/sample.json";
+const statusText = document.getElementById("data-status");
+const refreshButton = document.getElementById("refresh-data");
+const errorBox = document.getElementById("data-error");
+const warningsBox = document.getElementById("data-warnings");
 
-// ---------- Load Google Sheet JSON and draw points ----------
-d3.json(SHEET_API_URL)
-  .then(rawData => {
-    const data = rawData
-      .map(d => ({
-        peer: d.peer,
-        rev_donor_bases: d.rev_donor_bases,
-        prospect_track: d.prospect_track,
-        impact: +d.impact,
-        effort: +d.effort
-      }))
-      .filter(d => !isNaN(d.impact) && !isNaN(d.effort));
+function dataUrl() {
+  const { ENDPOINT = "", KEY = "" } = window.CHART_CONFIG || {};
+  if (!ENDPOINT) return SAMPLE_PATH;
+  return ENDPOINT + (KEY ? `?key=${encodeURIComponent(KEY)}` : "");
+}
 
-    svg.selectAll("circle")
-      .data(data)
-      .join("circle")
-      .attr("cx", d => x(d.effort))
-      .attr("cy", d => y(d.impact))
-      .attr("r", 8)
-      .attr("fill", "#4B8F78")
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 2)
-      .style("cursor", "pointer")
-      .on("mouseover", (event, d) => tooltip.style("visibility", "visible").text(d.peer))
-      .on("mousemove", event => {
-        tooltip
-          .style("top", (event.pageY - 35) + "px")
-          .style("left", (event.pageX + 12) + "px");
-      })
-      .on("mouseout", () => tooltip.style("visibility", "hidden"))
-      .on("click", function (event, d) {
-        showPanel(d3.select(this), d);
-      });
-  })
-  .catch(err => {
-    console.error("Could not load Google Sheet data:", err);
-    d3.select("#donor-chart")
-      .append("p")
-      .style("color", "crimson")
-      .text("Could not load data from the Google Sheet. Check that the Apps Script deployment is set to 'Anyone'.");
+function loadData() {
+  refreshButton.disabled = true;
+  statusText.textContent = "Loading donor data from the spreadsheet...";
+  errorBox.hidden = true;
+
+  d3.json(dataUrl(), { cache: "no-store" })
+    .then(result => {
+      if (result.error) throw new Error(result.error);
+      weights = result.weights;
+      drawPoints(result.donors);
+      showStatus(result);
+    })
+    .catch(err => {
+      console.error("Could not load chart data:", err);
+      statusText.textContent = "";
+      errorBox.textContent = `Could not load the donor data: ${err.message.replace(/\.$/, "")}. ` +
+        "Check the endpoint URL in js/config.js and the Apps Script deployment (see docs/DEPLOYMENT.md).";
+      errorBox.hidden = false;
+    })
+    .finally(() => { refreshButton.disabled = false; });
+}
+
+// "8 donors, live from the spreadsheet, as of Nov 25, 2026, 5:20 PM." plus any data warnings.
+function showStatus(result) {
+  const when = new Date(result.generated).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  const source = (window.CHART_CONFIG || {}).ENDPOINT
+    ? "live from the spreadsheet"
+    : "sample data (no endpoint set in js/config.js)";
+  statusText.textContent = `${result.donors.length} donors, ${source}, as of ${when}.`;
+
+  const warnings = result.warnings || [];
+  warningsBox.hidden = warnings.length === 0;
+  warningsBox.querySelector("summary").textContent =
+    `${warnings.length} data warning${warnings.length === 1 ? "" : "s"} (check the spreadsheet)`;
+  warningsBox.querySelector("ul").innerHTML =
+    warnings.map(w => `<li>${escapeHTML(w)}</li>`).join("");
+}
+
+function drawPoints(donors) {
+  closePanel();
+  const data = donors.filter(d => Number.isFinite(d.impact) && Number.isFinite(d.effort));
+
+  // Spread out donors that share the same (effort, impact) spot.
+  d3.group(data, d => `${d.effort},${d.impact}`).forEach(group => {
+    group.forEach((d, i) => {
+      const r = group.length > 1 ? OVERLAP_SPREAD : 0;
+      const angle = (2 * Math.PI * i) / group.length;
+      d.plotX = d.effort + r * Math.cos(angle);
+      d.plotY = d.impact + r * Math.sin(angle);
+    });
   });
+
+  svg.selectAll("circle.donor")
+    .data(data, d => d.peer)
+    .join("circle")
+    .attr("class", "donor")
+    .attr("cx", d => x(d.plotX))
+    .attr("cy", d => y(d.plotY))
+    .attr("r", 8)
+    .attr("fill", "#4B8F78")
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 2)
+    .style("cursor", "pointer")
+    .on("mouseover", (event, d) => tooltip.style("visibility", "visible").text(`${d.peer} (${d.persona})`))
+    .on("mousemove", event => {
+      tooltip
+        .style("top", (event.pageY - 35) + "px")
+        .style("left", (event.pageX + 12) + "px");
+    })
+    .on("mouseout", () => tooltip.style("visibility", "hidden"))
+    .on("click", function (event, d) {
+      showPanel(d3.select(this), d);
+    });
+}
+
+refreshButton.addEventListener("click", loadData);
+loadData();

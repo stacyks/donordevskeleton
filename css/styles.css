@@ -66,3 +66,129 @@ body {
     font-size: 13px;
 }
 
+
+/* Chart on the left, details panel on the right */
+.layout {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+#donor-chart {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#donor-details {
+    flex: 0 0 300px;
+    position: relative;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+#donor-details[hidden] {
+    display: none;
+}
+
+#donor-details h2 {
+    font-size: 18px;
+    margin: 0 1.5rem 0.5rem 0;
+}
+
+#donor-details h3 {
+    font-size: 14px;
+    margin: 0.75rem 0 0.25rem;
+}
+
+#donor-details ul {
+    padding-left: 1.1rem;
+}
+
+#close-details {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.breakdown {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.breakdown th,
+.breakdown td {
+    padding: 2px 4px;
+    border-bottom: 1px solid #eee;
+    text-align: right;
+}
+
+.breakdown th:first-child,
+.breakdown td:first-child {
+    text-align: left;
+}
+
+.breakdown .total td {
+    font-weight: bold;
+    border-top: 1px solid #999;
+}
+
+#donor-details .note {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+    margin: 0.25rem 0;
+}
+
+/* Data status bar above the chart */
+.data-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    font-size: 13px;
+    color: #555;
+    margin: 0.5rem 0;
+}
+
+.data-bar > span {
+    margin: 0;
+}
+
+#refresh-data {
+    margin: 0;
+    padding: 4px 12px;
+    font-size: 13px;
+    border: 1px solid #4B8F78;
+    border-radius: 4px;
+    background: #fff;
+    color: #2f6b57;
+    cursor: pointer;
+}
+
+#refresh-data:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+.data-error {
+    color: crimson;
+    font-size: 14px;
+}
+
+#data-warnings {
+    font-size: 13px;
+    color: #8a5a00;
+    margin: 0 0 0.5rem 0;
+}
+
+#data-warnings summary {
+    cursor: pointer;
+}

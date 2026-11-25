@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESC Donor Prioritization</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>ESC Donor Prioritization</h1>
+        <p>Each point is a prospective donor. Impact weighs historical giving most, then free market alignment, then ESC affiliation. Effort drops the more a donor has given before and the more ties they have to the team, ESC, and UMD. Click a point to see the math behind its position.</p>
+
+        <!-- Chart on the left, details panel on the right -->
+        <div class="layout">
+            <div id="donor-chart"></div>
+
+            <aside id="donor-details" hidden>
+                <button type="button" id="close-details" aria-label="Close details">&times;</button>
+                <div id="donor-details-content"></div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
