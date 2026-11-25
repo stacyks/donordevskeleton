@@ -1,5 +1,6 @@
 // ---------- Configuration ----------
-const CSV_PATH = "data/donors.csv";
+//USE Apps Script Web App URL!!!!!!
+const SHEET_API_URL = "https://google.com";
 
 // CSV columns: a, b, c (nominal), impact, effort (quantitative)
 // a = name shown in tooltip/panel title; b and c = detail sections in the side panel
@@ -133,16 +134,19 @@ function escapeHTML(value) {
   })[char]);
 }
 
-// ---------- Load CSV and draw points ----------
-d3.csv(CSV_PATH, d => ({
-  peer: d.peer,
-  rev_donor_bases: d.rev_donor_bases,
-  prospect_track: d.prospect_track,
-  impact: +d.impact,
-  effort: +d.effort
-}))
-  .then(data => {
-    data = data.filter(d => !isNaN(d.impact) && !isNaN(d.effort));
+
+// ---------- Load Google Sheet JSON and draw points ----------
+d3.json(SHEET_API_URL)
+  .then(rawData => {
+    const data = rawData
+      .map(d => ({
+        peer: d.peer,
+        rev_donor_bases: d.rev_donor_bases,
+        prospect_track: d.prospect_track,
+        impact: +d.impact,
+        effort: +d.effort
+      }))
+      .filter(d => !isNaN(d.impact) && !isNaN(d.effort));
 
     svg.selectAll("circle")
       .data(data)
@@ -166,9 +170,9 @@ d3.csv(CSV_PATH, d => ({
       });
   })
   .catch(err => {
-    console.error("Could not load CSV:", err);
+    console.error("Could not load Google Sheet data:", err);
     d3.select("#donor-chart")
       .append("p")
       .style("color", "crimson")
-      .text(`Could not load ${CSV_PATH}. If you opened index.html directly from your files, run a local server (e.g. "python -m http.server") instead.`);
+      .text("Could not load data from the Google Sheet. Check that the Apps Script deployment is set to 'Anyone'.");
   });
