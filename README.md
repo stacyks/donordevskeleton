@@ -2,7 +2,7 @@
 
 An interactive D3 quadrant chart that places prospective ESC donors by **impact** (how valuable a gift would be) and **effort** (how much work it would take to land them). The data is read live from the ESC Decision Matrix Google Sheet through a Google Apps Script endpoint, so the chart updates as soon as the sheet changes.
 
-Click any point to see the donor's persona, tier, and the exact math behind where it sits.
+Hover over a point, or a name in the Priority Order list, to see the donor's profile. Points and quadrants are color-coded, and chips at the top count the donors in each quadrant.
 
 ## How it works
 
@@ -19,11 +19,11 @@ Google Sheet  →  Apps Script web app (JSON)  →  Chart page on GitHub Pages
 
 ```
 donordevskeleton/
-├── index.html              Page: title, data status bar, chart, side panel
+├── index.html              Page: title, count chips, status bar, chart, Priority Order list
 ├── css/styles.css          Styling
 ├── js/
 │   ├── config.js           The Apps Script web app URL (set once per deployment)
-│   ├── script.js           Fetches the data and draws the chart and side panel
+│   ├── script.js           Fetches the data; draws the chart, list, and profile card
 │   └── vendor/             Local copy of D3 v7
 ├── apps-script/
 │   └── Code.gs             The endpoint, pasted into the sheet's Apps Script editor

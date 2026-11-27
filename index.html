@@ -7,9 +7,15 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>ESC Donor Prioritization</h1>
-        <p>Each point is a prospective donor. Impact weighs historical giving most, then free market alignment, then ESC affiliation. Effort drops the more a donor has given before and the more ties they have to the team, ESC, and UMD. Click a point to see the math behind its position.</p>
+    <div class="wrap">
+        <!-- Title on the left, quadrant counts on the right -->
+        <header class="page-head">
+            <div>
+                <h1>ESC Donor Prioritization</h1>
+                <p class="sub">Hover over a point or a name to see the donor's profile. Click to keep it open.</p>
+            </div>
+            <div id="quadrant-counts" class="counts"></div>
+        </header>
 
         <!-- Where the data came from, plus a button to pull the latest from the spreadsheet -->
         <div class="data-bar">
@@ -19,15 +25,20 @@
         <p id="data-error" class="data-error" hidden></p>
         <details id="data-warnings" hidden><summary></summary><ul></ul></details>
 
-        <!-- Chart on the left, details panel on the right -->
-        <div class="layout">
-            <div id="donor-chart"></div>
+        <!-- Chart card on the left, Priority Order card on the right -->
+        <main class="layout">
+            <section class="card chart-card">
+                <div id="donor-chart"></div>
+                <!-- Donor profile, shown beside a point on hover -->
+                <div id="donor-profile" class="profile" hidden></div>
+            </section>
 
-            <aside id="donor-details" hidden>
-                <button type="button" id="close-details" aria-label="Close details">&times;</button>
-                <div id="donor-details-content"></div>
+            <aside class="card priority-card">
+                <h3>Priority order</h3>
+                <ol id="priority-list"></ol>
+                <p class="note">Ranked by quadrant, then impact.</p>
             </aside>
-        </div>
+        </main>
     </div>
 
     <script src="js/vendor/d3.v7.min.js"></script>

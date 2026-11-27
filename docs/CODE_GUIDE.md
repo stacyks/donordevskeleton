@@ -25,11 +25,11 @@ Nothing is copied or converted by hand. The chart asks the endpoint for fresh da
 | File | Purpose |
 |---|---|
 | `apps-script/Code.gs` | The endpoint. Lives in the repo as the source of truth and is pasted into the sheet's Apps Script editor. |
-| `index.html` | Page layout: title, data status bar, chart, side panel. |
+| `index.html` | Page layout: title and quadrant count chips, data status bar, chart card with the profile card inside it, Priority Order card. |
 | `js/config.js` | `ENDPOINT` (web app URL) and optional `KEY`. The only file that changes per deployment. |
-| `js/script.js` | Fetches the JSON, draws axes, quadrants, points, tooltip, and the side panel math. |
+| `js/script.js` | Fetches the JSON; draws the colored quadrants, points, count chips, and Priority Order list; shows the profile card on hover. |
 | `js/vendor/d3.v7.min.js` | Local copy of D3 v7 (license in `d3-LICENSE.txt`). |
-| `css/styles.css` | Page, chart, status bar, and side panel styles. |
+| `css/styles.css` | Page, cards, chips, status bar, Priority Order list, and profile card styles. Stacks the list under the chart on narrow screens. |
 | `data/sample.json` | Placeholder data in the endpoint's format, shown when `ENDPOINT` is blank. |
 
 ### `apps-script/Code.gs`
@@ -50,13 +50,19 @@ Nothing is copied or converted by hand. The chart asks the endpoint for fresh da
 
 | Setting or function | Purpose |
 |---|---|
-| `AXIS_MIN`, `AXIS_MAX`, `AXIS_PAD` | Axis range and padding past the last tick |
+| `QUADRANTS` | Color and short name for each quadrant |
+| `PRIORITY_ORDER` | Quadrant order used by the Priority Order list |
+| `SCORE_FIELDS` | Criteria shown in the profile card, in order |
+| `X_DOMAIN`, `Y_DOMAIN` | Visible chart range (a little past Code.gs's +/-5, with room at the top for labels) |
 | `OVERLAP_SPREAD` | Donors with identical positions are spread in a small circle this wide |
-| `SCORE_FIELDS` | Criterion labels listed in the side panel |
-| `loadData()` | Fetches the endpoint (or `data/sample.json`), handles errors |
+| `POINT_RADIUS`, `ACTIVE_RADIUS` | Point size, normal and highlighted |
+| `loadData()` | Fetches the endpoint (or `data/sample.json`), then draws everything, handles errors |
 | `showStatus()` | The "N donors, live from the spreadsheet, as of ..." line and warnings |
-| `drawPoints()` | Places the points; keyed by donor name so Refresh updates them in place |
-| `showPanel()`, `breakdownHTML()` | The side panel and its score x weight tables |
+| `drawPoints()` | Places the colored points; keyed by donor name so Refresh updates them in place |
+| `drawPriorityList()` | Builds the ranked list: quadrant order, then impact, then effort |
+| `drawCounts()` | The quadrant count chips (Borderline only when needed) |
+| `showProfile()`, `placeProfile()`, `meterHTML()` | Fill the profile card, position it beside the point, draw the score squares |
+| `pin()`, `unpin()`, `hideProfile()`, `highlight()` | Hover versus pinned behavior and point/row highlighting |
 
 ## JSON format
 
