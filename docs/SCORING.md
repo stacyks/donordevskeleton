@@ -49,7 +49,7 @@ Scores: Historical Giving 0, ESC 1, Free Market 1, UMD 1, Warm Connections 1.
 
 -5 / 8 x 5 = **-3.12 effort**
 
-High impact and low effort put Apex in **Quick Wins**. Clicking a point on the chart shows the same breakdown.
+High impact and low effort put Apex in **Quick Wins**. The chart itself does not show this math; run `testChartData` in the Apps Script editor to see every donor's raw and rescaled values.
 
 ## Quadrants
 
@@ -64,6 +64,6 @@ A donor at exactly 0 on either axis is labeled "On a dividing line".
 
 1. Edit the numbers on the **Chart Settings** tab. Raise a weight to make that criterion move points further; set it to 0 to drop it from that axis.
 2. Click **Refresh data** on the chart.
-3. If a donor is not where you expect, click it to see which criterion drives its position.
+3. If a donor is not where you expect, hover over it to see its criterion scores, or run `testChartData` for the full math.
 
 If the Chart Settings tab is missing or a cell is blank, the script falls back to `DEFAULT_WEIGHTS` near the top of `Code.gs`. Donor names listed in `EXCLUDE` there are left off the chart.
